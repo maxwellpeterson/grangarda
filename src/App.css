@@ -1044,3 +1044,314 @@ body {
   border-radius: 3px;
   transition: width 0.3s ease;
 }
+
+/* ========================================
+   Build Mode Layout
+   ======================================== */
+.build-mode-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.build-mode-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  height: 600px;
+}
+
+.build-mode-map {
+  position: relative;
+  height: 100%;
+}
+
+.build-mode-map .map-container {
+  height: 100%;
+}
+
+.build-mode-sidebar {
+  border-left: 1px solid var(--border);
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ========================================
+   Segment Table
+   ======================================== */
+.segment-table-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.segment-table-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.segment-table-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.segment-table-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.segment-table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.segment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.segment-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-tertiary);
+}
+
+.segment-table th {
+  padding: var(--spacing-sm) var(--spacing-sm);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.segment-table .col-segment {
+  width: 50px;
+  text-align: center;
+}
+
+.segment-table .col-gravel,
+.segment-table .col-tarmac {
+  width: calc((100% - 50px) / 2);
+}
+
+.segment-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.segment-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.segment-row.active {
+  background: rgba(155, 89, 182, 0.15);
+}
+
+.segment-row td {
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.segment-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.segment-row.has-selection .segment-number {
+  background: var(--bg-card);
+}
+
+.segment-check {
+  margin-left: 4px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+/* Choice buttons in table */
+.choice-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.choice-button:hover {
+  border-color: var(--choice-color);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.choice-button.selected {
+  border-color: var(--choice-color);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.choice-distance {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.choice-elevation {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.choice-button.selected .choice-distance {
+  color: var(--choice-color);
+}
+
+/* ========================================
+   Segment Details Panel
+   ======================================== */
+.segment-details {
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.segment-details h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.segment-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.detail-column {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+}
+
+.detail-header.selected {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.detail-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.selected-badge {
+  margin-left: auto;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  background: var(--success);
+  color: white;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.detail-stats {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.detail-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.detail-stat:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.detail-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.segment-comparison-summary {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+}
+
+.segment-comparison-summary p {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.segment-comparison-summary p:last-child {
+  margin-bottom: 0;
+}
+
+/* ========================================
+   Responsive Build Mode
+   ======================================== */
+@media (max-width: 900px) {
+  .build-mode-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 350px 1fr;
+    height: auto;
+  }
+
+  .build-mode-sidebar {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: 400px;
+  }
+
+  .segment-details-grid {
+    grid-template-columns: 1fr;
+  }
+}

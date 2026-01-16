@@ -1,17 +1,21 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { HoverProvider } from './hooks/useHoverSync';
 import { UnitsProvider } from './hooks/useUnits';
-import { BlendedRouteProvider } from './hooks/useBlendedRoute';
+import { BlendedRouteProvider, useBlendedRoute } from './hooks/useBlendedRoute';
 import { useRouteData } from './hooks/useRouteData';
 import { Header } from './components/Header';
-import { Map } from './components/Map';
+import { Map, type MapRef } from './components/Map';
 import { RouteToggle } from './components/RouteToggle';
 import { ElevationProfiles } from './components/ElevationProfiles';
 import { RouteInfo } from './components/RouteInfo';
+import { SegmentTable } from './components/SegmentTable';
+import type { Segment } from './types/segments';
 import './App.css';
 
 function AppContent() {
   const { routes, isLoading, error } = useRouteData();
+  const { isBuilding } = useBlendedRoute();
+  const mapRef = useRef<MapRef>(null);
   const [visibleRoutes, setVisibleRoutes] = useState<Set<'gravel' | 'tarmac'>>(
     new Set(['gravel', 'tarmac'])
   );
@@ -26,6 +30,10 @@ function AppContent() {
       }
       return next;
     });
+  }, []);
+
+  const handleSegmentFocus = useCallback((segment: Segment) => {
+    mapRef.current?.zoomToSegment(segment);
   }, []);
 
   if (error) {
@@ -54,16 +62,33 @@ function AppContent() {
           </div>
         ) : (
           <>
-            <section className="controls-section">
-              <RouteToggle
-                routes={routes}
-                visibleRoutes={visibleRoutes}
-                onToggle={handleToggleRoute}
-              />
-            </section>
-            <section className="map-section">
-              <Map routes={routes} visibleRoutes={visibleRoutes} />
-            </section>
+            {!isBuilding && (
+              <section className="controls-section">
+                <RouteToggle
+                  routes={routes}
+                  visibleRoutes={visibleRoutes}
+                  onToggle={handleToggleRoute}
+                />
+              </section>
+            )}
+            
+            {isBuilding ? (
+              <section className="build-mode-section">
+                <div className="build-mode-layout">
+                  <div className="build-mode-map">
+                    <Map ref={mapRef} routes={routes} visibleRoutes={visibleRoutes} />
+                  </div>
+                  <div className="build-mode-sidebar">
+                    <SegmentTable onSegmentFocus={handleSegmentFocus} />
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <section className="map-section">
+                <Map ref={mapRef} routes={routes} visibleRoutes={visibleRoutes} />
+              </section>
+            )}
+            
             <section className="charts-section">
               <ElevationProfiles routes={routes} visibleRoutes={visibleRoutes} />
             </section>

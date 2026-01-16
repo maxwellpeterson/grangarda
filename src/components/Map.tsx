@@ -1,23 +1,26 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { RouteData } from '../types/route';
-import type { RouteChoice } from '../types/segments';
+import type { Segment } from '../types/segments';
 import { useHoverSync } from '../hooks/useHoverSync';
 import { useBlendedRoute } from '../hooks/useBlendedRoute';
 import { ROUTE_CONFIG } from '../hooks/useRouteData';
 import { findClosestPoint } from '../utils/gpx';
-import { SegmentPopup } from './SegmentPopup';
 
 interface MapProps {
   routes: RouteData[];
   visibleRoutes: Set<'gravel' | 'tarmac'>;
 }
 
+export interface MapRef {
+  zoomToSegment: (segment: Segment) => void;
+}
+
 // You'll need to set your Mapbox token here or via environment variable
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
 
-export function Map({ routes, visibleRoutes }: MapProps) {
+export const Map = forwardRef<MapRef, MapProps>(function Map({ routes, visibleRoutes }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -29,12 +32,38 @@ export function Map({ routes, visibleRoutes }: MapProps) {
     selections,
     selectedSegmentId,
     blendedRoute,
-    setSelectedSegment,
     setHoveredSegment,
-    selectSegment,
   } = useBlendedRoute();
-  
-  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Expose zoom function via ref
+  useImperativeHandle(ref, () => ({
+    zoomToSegment: (segment: Segment) => {
+      if (!map.current) return;
+      
+      // Collect all coordinates from both gravel and tarmac options
+      const allCoords: [number, number][] = [];
+      
+      segment.gravel.coordinates.forEach(([lng, lat]) => {
+        allCoords.push([lng, lat]);
+      });
+      segment.tarmac.coordinates.forEach(([lng, lat]) => {
+        allCoords.push([lng, lat]);
+      });
+      
+      if (allCoords.length === 0) return;
+      
+      const bounds = allCoords.reduce(
+        (bounds, coord) => bounds.extend(coord),
+        new mapboxgl.LngLatBounds(allCoords[0], allCoords[0])
+      );
+      
+      map.current.fitBounds(bounds, {
+        padding: { top: 80, bottom: 80, left: 80, right: 80 },
+        duration: 800,
+        maxZoom: 14,
+      });
+    },
+  }), []);
 
   // Initialize map
   useEffect(() => {
@@ -252,6 +281,8 @@ export function Map({ routes, visibleRoutes }: MapProps) {
     if (!isBuilding) return;
 
     segments.forEach((segment) => {
+      const isSelected = selectedSegmentId === segment.id;
+      
       if (segment.type === 'shared') {
         // Add shared segment (grey)
         const sourceId = `segment-${segment.id}-shared`;
@@ -309,7 +340,12 @@ export function Map({ routes, visibleRoutes }: MapProps) {
           });
 
           const isGravelSelected = selection === 'gravel';
-          const gravelOpacity = selection ? (isGravelSelected ? 1 : 0.3) : 0.7;
+          // Highlight when this segment is focused in the table
+          const isHighlighted = isSelected;
+          const gravelOpacity = selection 
+            ? (isGravelSelected ? 1 : 0.3) 
+            : (isHighlighted ? 1 : 0.7);
+          const lineWidth = isHighlighted ? 6 : (isGravelSelected ? 4 : 3);
 
           m.addLayer({
             id: `segment-${segment.id}-gravel-outline`,
@@ -317,7 +353,7 @@ export function Map({ routes, visibleRoutes }: MapProps) {
             source: gravelSourceId,
             paint: {
               'line-color': '#1a1a2e',
-              'line-width': isGravelSelected ? 6 : 4,
+              'line-width': lineWidth + 2,
               'line-opacity': gravelOpacity * 0.8,
             },
             layout: { 'line-join': 'round', 'line-cap': 'round' },
@@ -329,13 +365,13 @@ export function Map({ routes, visibleRoutes }: MapProps) {
             source: gravelSourceId,
             paint: {
               'line-color': ROUTE_CONFIG.gravel.color,
-              'line-width': isGravelSelected ? 4 : 3,
+              'line-width': lineWidth,
               'line-opacity': gravelOpacity,
             },
             layout: { 'line-join': 'round', 'line-cap': 'round' },
           });
 
-          // Hit area for gravel
+          // Hit area for gravel (for hover effects)
           m.addLayer({
             id: `segment-${segment.id}-gravel-hit`,
             type: 'line',
@@ -363,7 +399,11 @@ export function Map({ routes, visibleRoutes }: MapProps) {
           });
 
           const isTarmacSelected = selection === 'tarmac';
-          const tarmacOpacity = selection ? (isTarmacSelected ? 1 : 0.3) : 0.7;
+          const isHighlighted = isSelected;
+          const tarmacOpacity = selection 
+            ? (isTarmacSelected ? 1 : 0.3) 
+            : (isHighlighted ? 1 : 0.7);
+          const lineWidth = isHighlighted ? 6 : (isTarmacSelected ? 4 : 3);
 
           m.addLayer({
             id: `segment-${segment.id}-tarmac-outline`,
@@ -371,7 +411,7 @@ export function Map({ routes, visibleRoutes }: MapProps) {
             source: tarmacSourceId,
             paint: {
               'line-color': '#1a1a2e',
-              'line-width': isTarmacSelected ? 6 : 4,
+              'line-width': lineWidth + 2,
               'line-opacity': tarmacOpacity * 0.8,
             },
             layout: { 'line-join': 'round', 'line-cap': 'round' },
@@ -383,7 +423,7 @@ export function Map({ routes, visibleRoutes }: MapProps) {
             source: tarmacSourceId,
             paint: {
               'line-color': ROUTE_CONFIG.tarmac.color,
-              'line-width': isTarmacSelected ? 4 : 3,
+              'line-width': lineWidth,
               'line-opacity': tarmacOpacity,
             },
             layout: { 'line-join': 'round', 'line-cap': 'round' },
@@ -404,25 +444,13 @@ export function Map({ routes, visibleRoutes }: MapProps) {
         }
       }
     });
-  }, [mapLoaded, segments, isBuilding, selections]);
+  }, [mapLoaded, segments, isBuilding, selections, selectedSegmentId]);
 
-  // Handle segment click events
-  const handleSegmentClick = useCallback(
-    (segmentId: string, _routeChoice: RouteChoice, e: mapboxgl.MapMouseEvent) => {
-      setSelectedSegment(segmentId);
-      if (e.point) {
-        setPopupPosition({ x: e.point.x, y: e.point.y });
-      }
-    },
-    [setSelectedSegment]
-  );
-
-  // Add click handlers for segment layers
+  // Add hover handlers for segment layers (for visual feedback only, no popup)
   useEffect(() => {
     if (!map.current || !mapLoaded || !isBuilding) return;
 
     const m = map.current;
-    const handlers: Array<{ layer: string; handler: (e: mapboxgl.MapMouseEvent) => void }> = [];
 
     segments.forEach((segment) => {
       if (segment.type !== 'diverging') return;
@@ -431,10 +459,6 @@ export function Map({ routes, visibleRoutes }: MapProps) {
       const tarmacHitLayer = `segment-${segment.id}-tarmac-hit`;
 
       if (m.getLayer(gravelHitLayer)) {
-        const handler = (e: mapboxgl.MapMouseEvent) => handleSegmentClick(segment.id, 'gravel', e);
-        m.on('click', gravelHitLayer, handler);
-        handlers.push({ layer: gravelHitLayer, handler });
-
         m.on('mouseenter', gravelHitLayer, () => {
           m.getCanvas().style.cursor = 'pointer';
           setHoveredSegment(segment.id);
@@ -446,10 +470,6 @@ export function Map({ routes, visibleRoutes }: MapProps) {
       }
 
       if (m.getLayer(tarmacHitLayer)) {
-        const handler = (e: mapboxgl.MapMouseEvent) => handleSegmentClick(segment.id, 'tarmac', e);
-        m.on('click', tarmacHitLayer, handler);
-        handlers.push({ layer: tarmacHitLayer, handler });
-
         m.on('mouseenter', tarmacHitLayer, () => {
           m.getCanvas().style.cursor = 'pointer';
           setHoveredSegment(segment.id);
@@ -460,15 +480,7 @@ export function Map({ routes, visibleRoutes }: MapProps) {
         });
       }
     });
-
-    return () => {
-      handlers.forEach(({ layer, handler }) => {
-        if (m.getLayer(layer)) {
-          m.off('click', layer, handler);
-        }
-      });
-    };
-  }, [mapLoaded, segments, isBuilding, handleSegmentClick, setHoveredSegment]);
+  }, [mapLoaded, segments, isBuilding, setHoveredSegment]);
 
   // Add/update blended route layer when not in building mode
   useEffect(() => {
@@ -540,40 +552,9 @@ export function Map({ routes, visibleRoutes }: MapProps) {
     }
   }, [hoverState, routes]);
 
-  // Close popup when clicking outside
-  const handleClosePopup = useCallback(() => {
-    setSelectedSegment(null);
-    setPopupPosition(null);
-  }, [setSelectedSegment]);
-
-  // Handle segment selection from popup
-  const handleSelectSegment = useCallback(
-    (choice: RouteChoice) => {
-      if (selectedSegmentId) {
-        selectSegment(selectedSegmentId, choice);
-        handleClosePopup();
-      }
-    },
-    [selectedSegmentId, selectSegment, handleClosePopup]
-  );
-
-  // Get current segment for popup
-  const currentSegment = selectedSegmentId
-    ? segments.find((s) => s.id === selectedSegmentId)
-    : null;
-
   return (
     <div className="map-container">
       <div ref={mapContainer} className="map" />
-      {isBuilding && currentSegment && popupPosition && (
-        <SegmentPopup
-          segment={currentSegment}
-          position={popupPosition}
-          currentSelection={selections.get(currentSegment.id)}
-          onSelect={handleSelectSegment}
-          onClose={handleClosePopup}
-        />
-      )}
     </div>
   );
-}
+});
