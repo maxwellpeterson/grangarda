@@ -62,18 +62,6 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
                 >
                   <td className="col-segment">
                     <span className="segment-number">{index + 1}</span>
-                    {currentChoice && (
-                      <span 
-                        className="segment-check"
-                        style={{ 
-                          color: currentChoice === 'gravel' 
-                            ? ROUTE_CONFIG.gravel.color 
-                            : ROUTE_CONFIG.tarmac.color 
-                        }}
-                      >
-                        ✓
-                      </span>
-                    )}
                   </td>
                   
                   <td className="col-gravel">
@@ -110,104 +98,6 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
             })}
           </tbody>
         </table>
-      </div>
-      
-      {selectedSegmentId && (
-        <SegmentDetails 
-          segment={divergingSegments.find(s => s.id === selectedSegmentId)!}
-          currentChoice={selections.get(selectedSegmentId)}
-        />
-      )}
-    </div>
-  );
-}
-
-interface SegmentDetailsProps {
-  segment: Segment;
-  currentChoice?: RouteChoice;
-}
-
-function SegmentDetails({ segment, currentChoice }: SegmentDetailsProps) {
-  const { formatDistance, formatElevation } = useUnits();
-  
-  const gravelStats = segment.gravel;
-  const tarmacStats = segment.tarmac;
-  
-  // Calculate differences
-  const distanceDiff = gravelStats.distanceKm - tarmacStats.distanceKm;
-  const elevationDiff = gravelStats.elevationGain - tarmacStats.elevationGain;
-
-  return (
-    <div className="segment-details">
-      <h4>Segment Comparison</h4>
-      
-      <div className="segment-details-grid">
-        <div className="detail-column gravel">
-          <div 
-            className={`detail-header ${currentChoice === 'gravel' ? 'selected' : ''}`}
-            style={{ borderColor: ROUTE_CONFIG.gravel.color }}
-          >
-            <span 
-              className="detail-dot" 
-              style={{ backgroundColor: ROUTE_CONFIG.gravel.color }}
-            />
-            Gravel
-            {currentChoice === 'gravel' && <span className="selected-badge">Selected</span>}
-          </div>
-          <div className="detail-stats">
-            <div className="detail-stat">
-              <span className="detail-label">Distance</span>
-              <span className="detail-value">{formatDistance(gravelStats.distanceKm)}</span>
-            </div>
-            <div className="detail-stat">
-              <span className="detail-label">Climbing</span>
-              <span className="detail-value">+{formatElevation(gravelStats.elevationGain)}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="detail-column tarmac">
-          <div 
-            className={`detail-header ${currentChoice === 'tarmac' ? 'selected' : ''}`}
-            style={{ borderColor: ROUTE_CONFIG.tarmac.color }}
-          >
-            <span 
-              className="detail-dot" 
-              style={{ backgroundColor: ROUTE_CONFIG.tarmac.color }}
-            />
-            Tarmac
-            {currentChoice === 'tarmac' && <span className="selected-badge">Selected</span>}
-          </div>
-          <div className="detail-stats">
-            <div className="detail-stat">
-              <span className="detail-label">Distance</span>
-              <span className="detail-value">{formatDistance(tarmacStats.distanceKm)}</span>
-            </div>
-            <div className="detail-stat">
-              <span className="detail-label">Climbing</span>
-              <span className="detail-value">+{formatElevation(tarmacStats.elevationGain)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="segment-comparison-summary">
-        {Math.abs(distanceDiff) > 0.01 && (
-          <p>
-            <span style={{ color: distanceDiff > 0 ? ROUTE_CONFIG.gravel.color : ROUTE_CONFIG.tarmac.color }}>
-              {distanceDiff > 0 ? 'Gravel' : 'Tarmac'}
-            </span>
-            {' '}is {formatDistance(Math.abs(distanceDiff))} longer
-          </p>
-        )}
-        {Math.abs(elevationDiff) > 1 && (
-          <p>
-            <span style={{ color: elevationDiff > 0 ? ROUTE_CONFIG.gravel.color : ROUTE_CONFIG.tarmac.color }}>
-              {elevationDiff > 0 ? 'Gravel' : 'Tarmac'}
-            </span>
-            {' '}has {formatElevation(Math.abs(elevationDiff))} more climbing
-          </p>
-        )}
       </div>
     </div>
   );

@@ -1211,26 +1211,9 @@ body {
 }
 
 .segment-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
-}
-
-.segment-row.has-selection .segment-number {
-  background: var(--bg-card);
-}
-
-.segment-check {
-  margin-left: 4px;
-  font-size: 0.9rem;
-  font-weight: bold;
 }
 
 /* Choice buttons in table */
