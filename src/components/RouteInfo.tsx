@@ -1,18 +1,48 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import type { RouteData } from '../types/route';
 import { useUnits } from '../hooks/useUnits';
 import { useBlendedRoute } from '../hooks/useBlendedRoute';
 import { ROUTE_CONFIG } from '../hooks/useRouteData';
+import type { BlendedRoute } from '../types/segments';
 
 interface RouteInfoProps {
   routes: RouteData[];
   visibleRoutes: Set<'gravel' | 'tarmac'>;
 }
 
+/**
+ * Generate GPX file content from blended route coordinates
+ */
+function generateGpx(blendedRoute: BlendedRoute): string {
+  const timestamp = new Date().toISOString();
+  const points = blendedRoute.coordinates
+    .map(([lng, lat, ele]) => 
+      `      <trkpt lat="${lat}" lon="${lng}"><ele>${ele.toFixed(1)}</ele></trkpt>`
+    )
+    .join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="GranGarda Route Builder"
+  xmlns="http://www.topografix.com/GPX/1/1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>GranGarda Custom Route</name>
+    <time>${timestamp}</time>
+  </metadata>
+  <trk>
+    <name>GranGarda Custom Route</name>
+    <trkseg>
+${points}
+    </trkseg>
+  </trk>
+</gpx>`;
+}
+
 export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
   const { formatDistance, formatElevation, formatElevationChange } = useUnits();
   const { blendedRoute, isBuilding, selections, divergingSegments } = useBlendedRoute();
-  // divergingSegments is used for the building progress indicator
+  const [copySuccess, setCopySuccess] = useState(false);
   const visibleRoutesList = routes.filter((r) => visibleRoutes.has(r.id));
 
   // Calculate min/max elevation for blended route
@@ -23,6 +53,32 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
       min: Math.min(...elevations),
       max: Math.max(...elevations),
     };
+  }, [blendedRoute]);
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  }, []);
+
+  const handleDownloadGpx = useCallback(() => {
+    if (!blendedRoute) return;
+    
+    const gpxContent = generateGpx(blendedRoute);
+    const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'grangarda-custom-route.gpx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }, [blendedRoute]);
 
   // Show blended route when not in building mode and we have a complete one
@@ -61,6 +117,20 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
               <span className="info-label">Min Elevation</span>
               <span className="info-value">{formatElevation(blendedElevationStats.min)}</span>
             </div>
+          </div>
+          <div className="blended-route-actions">
+            <button 
+              className="action-button copy-link-button"
+              onClick={handleCopyLink}
+            >
+              {copySuccess ? 'Copied!' : 'Copy Link'}
+            </button>
+            <button 
+              className="action-button download-gpx-button"
+              onClick={handleDownloadGpx}
+            >
+              Download GPX
+            </button>
           </div>
         </div>
       )}
