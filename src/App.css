@@ -439,6 +439,15 @@ body {
 
 .chart-wrapper {
   margin-top: var(--spacing-sm);
+  position: relative;
+}
+
+/* Tooltip overlay for map hover sync */
+.chart-tooltip-overlay {
+  position: absolute;
+  top: 20px;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .no-routes-message {

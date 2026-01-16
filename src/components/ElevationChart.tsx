@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   AreaChart,
   Area,
@@ -30,6 +30,7 @@ interface ChartDataPoint {
 export function ElevationChart({ route, isVisible }: ElevationChartProps) {
   const { hoverState, setHover, clearHover } = useHoverSync();
   const { units, formatDistance, formatElevationChange, distanceUnit, elevationUnit } = useUnits();
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
 
   // Downsample data for performance (max 500 points)
   // Convert units based on current setting
@@ -65,10 +66,11 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
   const handleMouseMove = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (state: any) => {
-      if (state?.activePayload?.[0]) {
-        const data = state.activePayload[0].payload as ChartDataPoint;
+      // Recharts passes activeTooltipIndex which we use to look up the data point
+      if (state?.activeTooltipIndex != null && chartData[state.activeTooltipIndex]) {
+        const data = chartData[state.activeTooltipIndex];
         const point: ElevationPoint = {
-          distance: data.distanceRaw, // Use raw km for consistency
+          distance: data.distanceRaw,
           elevation: data.elevation,
           lat: data.lat,
           lng: data.lng,
@@ -77,43 +79,53 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
         setHover(route.id, point, 'chart');
       }
     },
-    [route.id, setHover]
+    [route.id, setHover, chartData]
   );
 
   const handleMouseLeave = useCallback(() => {
     clearHover();
   }, [clearHover]);
 
-  // Find reference line position when hovering from map
-  const referenceDistance = useMemo(() => {
+  // Find the data point and reference line position when hovering from map
+  const mapHoverData = useMemo(() => {
     if (
       hoverState.source === 'map' &&
       hoverState.routeId === route.id &&
       hoverState.point
     ) {
-      // Convert to current unit system
-      const distKm = hoverState.point.distance;
-      return units === 'imperial'
-        ? Math.round(kmToMiles(distKm) * 10) / 10
-        : Math.round(distKm * 10) / 10;
+      // Find the closest chart data point by raw distance
+      const targetDistanceKm = hoverState.point.distance;
+      let closestIndex = 0;
+      let closestDiff = Infinity;
+      
+      for (let i = 0; i < chartData.length; i++) {
+        const diff = Math.abs(chartData[i].distanceRaw - targetDistanceKm);
+        if (diff < closestDiff) {
+          closestDiff = diff;
+          closestIndex = i;
+        }
+      }
+      
+      const data = chartData[closestIndex];
+      return {
+        distance: data.distance,
+        data,
+        index: closestIndex,
+      };
     }
     return null;
-  }, [hoverState, route.id, units]);
+  }, [hoverState, route.id, chartData]);
+
+  // Check if this chart should show hover state (from either source)
+  const isHovering = hoverState.routeId === route.id && hoverState.point;
+  const isHoveringFromMap = hoverState.source === 'map' && isHovering;
 
   if (!isVisible) {
     return null;
   }
 
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: Array<{ payload: ChartDataPoint }>;
-  }) => {
-    if (!active || !payload || !payload[0]) return null;
-
-    const data = payload[0].payload;
+  // Tooltip content renderer - used for both built-in tooltip and map hover overlay
+  const renderTooltipContent = (data: ChartDataPoint) => {
     const gradeColor =
       data.grade > 8
         ? '#e74c3c'
@@ -144,6 +156,47 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
     );
   };
 
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean;
+    payload?: Array<{ payload: ChartDataPoint }>;
+  }) => {
+    // Don't show built-in tooltip when hovering from map (we show our own overlay)
+    if (isHoveringFromMap) return null;
+    if (!active || !payload || !payload[0]) return null;
+    return renderTooltipContent(payload[0].payload);
+  };
+
+  // Calculate tooltip position for map hover overlay
+  const getTooltipPosition = () => {
+    if (!mapHoverData || !chartWrapperRef.current) return null;
+    
+    const wrapper = chartWrapperRef.current;
+    const wrapperWidth = wrapper.offsetWidth;
+    
+    // Chart margins from the AreaChart component
+    const marginLeft = 55; // YAxis width
+    const marginRight = 20;
+    const chartWidth = wrapperWidth - marginLeft - marginRight;
+    
+    // Calculate X position based on data index
+    const xPercent = mapHoverData.index / (chartData.length - 1);
+    const xPos = marginLeft + (xPercent * chartWidth);
+    
+    // Position tooltip to the right of the line, or left if near the edge
+    const tooltipWidth = 150;
+    const positionLeft = xPos + tooltipWidth + 20 < wrapperWidth;
+    
+    return {
+      left: positionLeft ? xPos + 10 : xPos - tooltipWidth - 10,
+      xPos,
+    };
+  };
+
+  const tooltipPosition = getTooltipPosition();
+
   return (
     <div className="elevation-chart">
       <div className="chart-header">
@@ -160,7 +213,7 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
           <span>{formatElevationChange(route.stats.elevationGain, true)}</span>
         </div>
       </div>
-      <div className="chart-wrapper">
+      <div className="chart-wrapper" ref={chartWrapperRef}>
         <ResponsiveContainer width="100%" height={140}>
           <AreaChart
             data={chartData}
@@ -195,7 +248,10 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
               tickFormatter={(value) => `${value.toLocaleString()}`}
               width={55}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip 
+              content={<CustomTooltip />}
+              cursor={{ stroke: route.color, strokeWidth: 2 }}
+            />
             <Area
               type="monotone"
               dataKey="elevation"
@@ -204,16 +260,25 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
               fill={`url(#gradient-${route.id})`}
               isAnimationActive={false}
             />
-            {referenceDistance !== null && (
+            {mapHoverData && (
               <ReferenceLine
-                x={referenceDistance}
+                x={mapHoverData.distance}
                 stroke={route.color}
                 strokeWidth={2}
-                strokeDasharray="4 4"
               />
             )}
           </AreaChart>
         </ResponsiveContainer>
+        
+        {/* Overlay tooltip when hovering from map */}
+        {isHoveringFromMap && mapHoverData && tooltipPosition && (
+          <div 
+            className="chart-tooltip-overlay"
+            style={{ left: tooltipPosition.left }}
+          >
+            {renderTooltipContent(mapHoverData.data)}
+          </div>
+        )}
       </div>
     </div>
   );
