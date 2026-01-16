@@ -12,6 +12,7 @@ interface RouteInfoProps {
 export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
   const { formatDistance, formatElevation, formatElevationChange } = useUnits();
   const { blendedRoute, isBuilding, selections, divergingSegments } = useBlendedRoute();
+  // divergingSegments is used for the building progress indicator
   const visibleRoutesList = routes.filter((r) => visibleRoutes.has(r.id));
 
   // Calculate min/max elevation for blended route
@@ -23,31 +24,6 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
       max: Math.max(...elevations),
     };
   }, [blendedRoute]);
-
-  // Calculate surface breakdown for blended route
-  const blendedSurface = useMemo(() => {
-    if (!blendedRoute) return null;
-    
-    let gravelKm = 0;
-    let tarmacKm = 0;
-    
-    for (const [segmentId, choice] of blendedRoute.selections) {
-      const segment = divergingSegments.find(s => s.id === segmentId);
-      if (segment) {
-        if (choice === 'gravel') {
-          gravelKm += segment.gravel.distanceKm;
-        } else {
-          tarmacKm += segment.tarmac.distanceKm;
-        }
-      }
-    }
-    
-    const total = gravelKm + tarmacKm;
-    if (total === 0) return null;
-    
-    const gravelPercent = Math.round((gravelKm / total) * 100);
-    return { gravelPercent, tarmacPercent: 100 - gravelPercent };
-  }, [blendedRoute, divergingSegments]);
 
   // Show blended route when not in building mode and we have a complete one
   const showBlendedRoute = !isBuilding && blendedRoute !== null;
@@ -78,10 +54,6 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
               <span className="info-value">{formatElevationChange(blendedRoute.elevationGain, true)}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Elevation Loss</span>
-              <span className="info-value">{formatElevationChange(blendedRoute.elevationLoss, false)}</span>
-            </div>
-            <div className="info-item">
               <span className="info-label">Max Elevation</span>
               <span className="info-value">{formatElevation(blendedElevationStats.max)}</span>
             </div>
@@ -89,16 +61,6 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
               <span className="info-label">Min Elevation</span>
               <span className="info-value">{formatElevation(blendedElevationStats.min)}</span>
             </div>
-            {blendedSurface && (
-              <div className="info-item">
-                <span className="info-label">Surface Mix</span>
-                <span className="info-value surface-mix">
-                  <span className="surface-gravel">{blendedSurface.gravelPercent}% Gravel</span>
-                  <span className="surface-separator">/</span>
-                  <span className="surface-tarmac">{blendedSurface.tarmacPercent}% Tarmac</span>
-                </span>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -142,22 +104,12 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
               <span className="info-value">{formatElevationChange(route.stats.elevationGain, true)}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Elevation Loss</span>
-              <span className="info-value">{formatElevationChange(route.stats.elevationLoss, false)}</span>
-            </div>
-            <div className="info-item">
               <span className="info-label">Max Elevation</span>
               <span className="info-value">{formatElevation(route.stats.maxElevation)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Min Elevation</span>
               <span className="info-value">{formatElevation(route.stats.minElevation)}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Surface</span>
-              <span className="info-value">
-                {route.id === 'gravel' ? '50% Unpaved' : '99% Paved'}
-              </span>
             </div>
           </div>
         </div>

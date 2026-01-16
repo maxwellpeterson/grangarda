@@ -163,10 +163,6 @@ function SegmentDetails({ segment, currentChoice }: SegmentDetailsProps) {
               <span className="detail-label">Climbing</span>
               <span className="detail-value">+{formatElevation(gravelStats.elevationGain)}</span>
             </div>
-            <div className="detail-stat">
-              <span className="detail-label">Descending</span>
-              <span className="detail-value">-{formatElevation(gravelStats.elevationLoss)}</span>
-            </div>
           </div>
         </div>
         
@@ -190,10 +186,6 @@ function SegmentDetails({ segment, currentChoice }: SegmentDetailsProps) {
             <div className="detail-stat">
               <span className="detail-label">Climbing</span>
               <span className="detail-value">+{formatElevation(tarmacStats.elevationGain)}</span>
-            </div>
-            <div className="detail-stat">
-              <span className="detail-label">Descending</span>
-              <span className="detail-value">-{formatElevation(tarmacStats.elevationLoss)}</span>
             </div>
           </div>
         </div>
