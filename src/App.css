@@ -1157,6 +1157,32 @@ body {
   min-height: 0;
 }
 
+.segment-table-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: 4px;
+}
+
+.feeling-lucky-button {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, var(--gravel-color), var(--tarmac-color));
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.feeling-lucky-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 .segment-table {
   width: 100%;
   border-collapse: collapse;

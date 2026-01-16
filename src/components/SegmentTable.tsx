@@ -31,13 +31,31 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
     selectSegment(segmentId, choice);
   };
 
+  const handleFeelingLucky = () => {
+    divergingSegments.forEach((segment) => {
+      if (!selections.has(segment.id)) {
+        const choice: RouteChoice = Math.random() < 0.5 ? 'gravel' : 'tarmac';
+        selectSegment(segment.id, choice);
+      }
+    });
+  };
+
+  const remainingCount = divergingSegments.length - selections.size;
+
   return (
     <div className="segment-table-container">
       <div className="segment-table-header">
         <h3>Route Segments</h3>
-        <p className="segment-table-subtitle">
-          {selections.size} of {divergingSegments.length} selected
-        </p>
+        <div className="segment-table-subheader">
+          <span className="segment-table-subtitle">
+            {selections.size} of {divergingSegments.length} selected
+          </span>
+          {remainingCount > 0 && (
+            <button className="feeling-lucky-button" onClick={handleFeelingLucky}>
+              I'm Feeling Lucky
+            </button>
+          )}
+        </div>
       </div>
       
       <div className="segment-table-scroll">
