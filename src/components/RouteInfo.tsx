@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
 import type { RouteData } from '../types/route';
 import { useUnits } from '../hooks/useUnits';
+import { useBlendedRoute } from '../hooks/useBlendedRoute';
+import { ROUTE_CONFIG } from '../hooks/useRouteData';
 
 interface RouteInfoProps {
   routes: RouteData[];
@@ -8,14 +11,120 @@ interface RouteInfoProps {
 
 export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
   const { formatDistance, formatElevation, formatElevationChange } = useUnits();
+  const { blendedRoute, isBuilding, selections, divergingSegments } = useBlendedRoute();
   const visibleRoutesList = routes.filter((r) => visibleRoutes.has(r.id));
 
-  if (visibleRoutesList.length === 0) {
+  // Calculate min/max elevation for blended route
+  const blendedElevationStats = useMemo(() => {
+    if (!blendedRoute) return null;
+    const elevations = blendedRoute.coordinates.map(([, , elev]) => elev);
+    return {
+      min: Math.min(...elevations),
+      max: Math.max(...elevations),
+    };
+  }, [blendedRoute]);
+
+  // Calculate surface breakdown for blended route
+  const blendedSurface = useMemo(() => {
+    if (!blendedRoute) return null;
+    
+    let gravelKm = 0;
+    let tarmacKm = 0;
+    
+    for (const [segmentId, choice] of blendedRoute.selections) {
+      const segment = divergingSegments.find(s => s.id === segmentId);
+      if (segment) {
+        if (choice === 'gravel') {
+          gravelKm += segment.gravel.distanceKm;
+        } else {
+          tarmacKm += segment.tarmac.distanceKm;
+        }
+      }
+    }
+    
+    const total = gravelKm + tarmacKm;
+    if (total === 0) return null;
+    
+    const gravelPercent = Math.round((gravelKm / total) * 100);
+    return { gravelPercent, tarmacPercent: 100 - gravelPercent };
+  }, [blendedRoute, divergingSegments]);
+
+  // Show blended route when not in building mode and we have a complete one
+  const showBlendedRoute = !isBuilding && blendedRoute !== null;
+
+  if (visibleRoutesList.length === 0 && !showBlendedRoute) {
     return null;
   }
 
   return (
     <div className="route-info">
+      {/* Blended route card (shown first when available) */}
+      {showBlendedRoute && blendedElevationStats && (
+        <div
+          className="route-info-card blended-route-card"
+          style={{ borderColor: ROUTE_CONFIG.blended.color }}
+        >
+          <h3 style={{ color: ROUTE_CONFIG.blended.color }}>
+            {ROUTE_CONFIG.blended.name}
+            <span className="blended-badge">Custom</span>
+          </h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <span className="info-label">Distance</span>
+              <span className="info-value">{formatDistance(blendedRoute.distanceKm, 1)}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Elevation Gain</span>
+              <span className="info-value">{formatElevationChange(blendedRoute.elevationGain, true)}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Elevation Loss</span>
+              <span className="info-value">{formatElevationChange(blendedRoute.elevationLoss, false)}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Max Elevation</span>
+              <span className="info-value">{formatElevation(blendedElevationStats.max)}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Min Elevation</span>
+              <span className="info-value">{formatElevation(blendedElevationStats.min)}</span>
+            </div>
+            {blendedSurface && (
+              <div className="info-item">
+                <span className="info-label">Surface Mix</span>
+                <span className="info-value surface-mix">
+                  <span className="surface-gravel">{blendedSurface.gravelPercent}% Gravel</span>
+                  <span className="surface-separator">/</span>
+                  <span className="surface-tarmac">{blendedSurface.tarmacPercent}% Tarmac</span>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Building mode progress indicator */}
+      {isBuilding && (
+        <div className="building-progress-card">
+          <h3>Building Custom Route</h3>
+          <p>
+            Click on diverging segments on the map to choose between gravel and tarmac.
+          </p>
+          <div className="progress-info">
+            <span className="progress-count">
+              {selections.size} of {divergingSegments.length} segments selected
+            </span>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill"
+                style={{ width: `${(selections.size / divergingSegments.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Original route cards */}
       {visibleRoutesList.map((route) => (
         <div
           key={route.id}

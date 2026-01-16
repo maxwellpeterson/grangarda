@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { HoverProvider } from './hooks/useHoverSync';
 import { UnitsProvider } from './hooks/useUnits';
+import { BlendedRouteProvider } from './hooks/useBlendedRoute';
 import { useRouteData } from './hooks/useRouteData';
 import { Header } from './components/Header';
 import { Map } from './components/Map';
@@ -85,11 +86,33 @@ function AppContent() {
   );
 }
 
+function AppWithSegments() {
+  const { segments, isLoading } = useRouteData();
+  
+  // Wait for segments to load before rendering BlendedRouteProvider
+  if (isLoading) {
+    return (
+      <div className="app">
+        <div className="loading">
+          <div className="loading-spinner" />
+          <p>Loading routes...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <BlendedRouteProvider segments={segments}>
+      <AppContent />
+    </BlendedRouteProvider>
+  );
+}
+
 function App() {
   return (
     <UnitsProvider>
       <HoverProvider>
-        <AppContent />
+        <AppWithSegments />
       </HoverProvider>
     </UnitsProvider>
   );
