@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { HoverProvider } from './hooks/useHoverSync';
+import { UnitsProvider } from './hooks/useUnits';
 import { useRouteData } from './hooks/useRouteData';
 import { Header } from './components/Header';
 import { Map } from './components/Map';
@@ -86,9 +87,11 @@ function AppContent() {
 
 function App() {
   return (
-    <HoverProvider>
-      <AppContent />
-    </HoverProvider>
+    <UnitsProvider>
+      <HoverProvider>
+        <AppContent />
+      </HoverProvider>
+    </UnitsProvider>
   );
 }
 

@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import type { RouteData, ElevationPoint } from '../types/route';
 import { useHoverSync } from '../hooks/useHoverSync';
+import { useUnits, kmToMiles, metersToFeet } from '../hooks/useUnits';
 import { downsampleProfile } from '../utils/gpx';
 
 interface ElevationChartProps {
@@ -20,6 +21,7 @@ interface ElevationChartProps {
 interface ChartDataPoint {
   distance: number;
   elevation: number;
+  distanceRaw: number; // km - for reference line matching
   lat: number;
   lng: number;
   grade: number;
@@ -27,18 +29,29 @@ interface ChartDataPoint {
 
 export function ElevationChart({ route, isVisible }: ElevationChartProps) {
   const { hoverState, setHover, clearHover } = useHoverSync();
+  const { units, formatDistance, formatElevationChange, distanceUnit, elevationUnit } = useUnits();
 
   // Downsample data for performance (max 500 points)
+  // Convert units based on current setting
   const chartData = useMemo<ChartDataPoint[]>(() => {
     const downsampled = downsampleProfile(route.elevationProfile, 500);
-    return downsampled.map((p) => ({
-      distance: Math.round(p.distance * 10) / 10,
-      elevation: Math.round(p.elevation),
-      lat: p.lat,
-      lng: p.lng,
-      grade: Math.round((p.grade || 0) * 10) / 10,
-    }));
-  }, [route.elevationProfile]);
+    return downsampled.map((p) => {
+      const distance = units === 'imperial' 
+        ? Math.round(kmToMiles(p.distance) * 10) / 10
+        : Math.round(p.distance * 10) / 10;
+      const elevation = units === 'imperial'
+        ? metersToFeet(p.elevation)
+        : Math.round(p.elevation);
+      return {
+        distance,
+        elevation,
+        distanceRaw: p.distance,
+        lat: p.lat,
+        lng: p.lng,
+        grade: Math.round((p.grade || 0) * 10) / 10,
+      };
+    });
+  }, [route.elevationProfile, units]);
 
   // Calculate Y-axis domain with some padding
   const yDomain = useMemo(() => {
@@ -55,7 +68,7 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
       if (state?.activePayload?.[0]) {
         const data = state.activePayload[0].payload as ChartDataPoint;
         const point: ElevationPoint = {
-          distance: data.distance,
+          distance: data.distanceRaw, // Use raw km for consistency
           elevation: data.elevation,
           lat: data.lat,
           lng: data.lng,
@@ -78,10 +91,14 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
       hoverState.routeId === route.id &&
       hoverState.point
     ) {
-      return hoverState.point.distance;
+      // Convert to current unit system
+      const distKm = hoverState.point.distance;
+      return units === 'imperial'
+        ? Math.round(kmToMiles(distKm) * 10) / 10
+        : Math.round(distKm * 10) / 10;
     }
     return null;
-  }, [hoverState, route.id]);
+  }, [hoverState, route.id, units]);
 
   if (!isVisible) {
     return null;
@@ -110,11 +127,11 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
       <div className="chart-tooltip">
         <div className="tooltip-row">
           <span className="tooltip-label">Distance:</span>
-          <span className="tooltip-value">{data.distance.toFixed(1)} km</span>
+          <span className="tooltip-value">{data.distance.toFixed(1)} {distanceUnit}</span>
         </div>
         <div className="tooltip-row">
           <span className="tooltip-label">Elevation:</span>
-          <span className="tooltip-value">{data.elevation} m</span>
+          <span className="tooltip-value">{data.elevation.toLocaleString()} {elevationUnit}</span>
         </div>
         <div className="tooltip-row">
           <span className="tooltip-label">Grade:</span>
@@ -138,9 +155,9 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
           {route.name}
         </div>
         <div className="chart-stats">
-          <span>{route.stats.distance.toFixed(0)} km</span>
+          <span>{formatDistance(route.stats.distance)}</span>
           <span className="stat-divider">|</span>
-          <span>+{route.stats.elevationGain.toFixed(0)} m</span>
+          <span>{formatElevationChange(route.stats.elevationGain, true)}</span>
         </div>
       </div>
       <div className="chart-wrapper">
@@ -175,7 +192,7 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
               tick={{ fill: '#8892a0', fontSize: 11 }}
               tickLine={{ stroke: '#8892a0' }}
               axisLine={{ stroke: '#3d4555' }}
-              tickFormatter={(value) => `${value}m`}
+              tickFormatter={(value) => `${value.toLocaleString()}`}
               width={55}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -189,7 +206,7 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
             />
             {referenceDistance !== null && (
               <ReferenceLine
-                x={Math.round(referenceDistance * 10) / 10}
+                x={referenceDistance}
                 stroke={route.color}
                 strokeWidth={2}
                 strokeDasharray="4 4"

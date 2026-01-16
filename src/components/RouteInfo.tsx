@@ -1,4 +1,5 @@
 import type { RouteData } from '../types/route';
+import { useUnits } from '../hooks/useUnits';
 
 interface RouteInfoProps {
   routes: RouteData[];
@@ -6,6 +7,7 @@ interface RouteInfoProps {
 }
 
 export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
+  const { formatDistance, formatElevation, formatElevationChange } = useUnits();
   const visibleRoutesList = routes.filter((r) => visibleRoutes.has(r.id));
 
   if (visibleRoutesList.length === 0) {
@@ -24,23 +26,23 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
           <div className="info-grid">
             <div className="info-item">
               <span className="info-label">Distance</span>
-              <span className="info-value">{route.stats.distance.toFixed(1)} km</span>
+              <span className="info-value">{formatDistance(route.stats.distance, 1)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Elevation Gain</span>
-              <span className="info-value">+{route.stats.elevationGain.toFixed(0)} m</span>
+              <span className="info-value">{formatElevationChange(route.stats.elevationGain, true)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Elevation Loss</span>
-              <span className="info-value">-{route.stats.elevationLoss.toFixed(0)} m</span>
+              <span className="info-value">{formatElevationChange(route.stats.elevationLoss, false)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Max Elevation</span>
-              <span className="info-value">{route.stats.maxElevation.toFixed(0)} m</span>
+              <span className="info-value">{formatElevation(route.stats.maxElevation)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Min Elevation</span>
-              <span className="info-value">{route.stats.minElevation.toFixed(0)} m</span>
+              <span className="info-value">{formatElevation(route.stats.minElevation)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Surface</span>

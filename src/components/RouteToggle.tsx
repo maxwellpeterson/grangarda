@@ -1,4 +1,5 @@
 import type { RouteData } from '../types/route';
+import { useUnits } from '../hooks/useUnits';
 
 interface RouteToggleProps {
   routes: RouteData[];
@@ -7,6 +8,8 @@ interface RouteToggleProps {
 }
 
 export function RouteToggle({ routes, visibleRoutes, onToggle }: RouteToggleProps) {
+  const { formatDistance, formatElevationChange } = useUnits();
+
   return (
     <div className="route-toggle">
       {routes.map((route) => {
@@ -24,7 +27,7 @@ export function RouteToggle({ routes, visibleRoutes, onToggle }: RouteToggleProp
             <span className="toggle-indicator" />
             <span className="toggle-label">{route.name}</span>
             <span className="toggle-stats">
-              {route.stats.distance.toFixed(0)} km | +{route.stats.elevationGain.toFixed(0)} m
+              {formatDistance(route.stats.distance)} | {formatElevationChange(route.stats.elevationGain, true)}
             </span>
           </button>
         );

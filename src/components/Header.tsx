@@ -1,4 +1,8 @@
+import { useUnits } from '../hooks/useUnits';
+
 export function Header() {
+  const { units, toggleUnits } = useUnits();
+
   return (
     <header className="header">
       <div className="header-content">
@@ -8,7 +12,20 @@ export function Header() {
         </h1>
         <p className="tagline">Route Comparison</p>
       </div>
-      <nav className="header-links">
+      <div className="header-actions">
+        <button
+          className="unit-toggle"
+          onClick={toggleUnits}
+          aria-label={`Switch to ${units === 'metric' ? 'imperial' : 'metric'} units`}
+        >
+          <span className={`unit-option ${units === 'metric' ? 'active' : ''}`}>
+            km/m
+          </span>
+          <span className="unit-divider">/</span>
+          <span className={`unit-option ${units === 'imperial' ? 'active' : ''}`}>
+            mi/ft
+          </span>
+        </button>
         <a
           href="https://grangarda.com"
           target="_blank"
@@ -17,7 +34,7 @@ export function Header() {
         >
           Official Site
         </a>
-      </nav>
+      </div>
     </header>
   );
 }
