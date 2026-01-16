@@ -1,0 +1,8 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "grangarda-routes",
+  "compatibility_date": "2025-01-15",
+  "assets": {
+    "directory": "./dist"
+  }
+}
