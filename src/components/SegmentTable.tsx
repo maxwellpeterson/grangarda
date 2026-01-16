@@ -92,7 +92,7 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
                         {formatDistance(segment.gravel.distanceKm)}
                       </span>
                       <span className="choice-elevation">
-                        +{formatElevation(segment.gravel.elevationGain)}
+                        {formatElevation(segment.gravel.elevationGain)}
                       </span>
                     </button>
                   </td>
@@ -107,7 +107,7 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
                         {formatDistance(segment.tarmac.distanceKm)}
                       </span>
                       <span className="choice-elevation">
-                        +{formatElevation(segment.tarmac.elevationGain)}
+                        {formatElevation(segment.tarmac.elevationGain)}
                       </span>
                     </button>
                   </td>

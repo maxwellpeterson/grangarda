@@ -27,7 +27,7 @@ export function RouteToggle({ routes, visibleRoutes, onToggle }: RouteToggleProp
             <span className="toggle-indicator" />
             <span className="toggle-label">{route.name}</span>
             <span className="toggle-stats">
-              {formatDistance(route.stats.distance)} | {formatElevationChange(route.stats.elevationGain, true)}
+              {formatDistance(route.stats.distance)} | {formatElevationChange(route.stats.elevationGain)}
             </span>
           </button>
         );

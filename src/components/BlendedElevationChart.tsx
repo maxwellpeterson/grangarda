@@ -121,7 +121,7 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
         <div className="chart-stats">
           <span>{formatDistance(blendedRoute.distanceKm)}</span>
           <span className="stat-divider">|</span>
-          <span>{formatElevationChange(blendedRoute.elevationGain, true)}</span>
+          <span>{formatElevationChange(blendedRoute.elevationGain)}</span>
         </div>
       </div>
       <div className="chart-wrapper">

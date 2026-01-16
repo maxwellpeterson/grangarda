@@ -107,7 +107,7 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
             </div>
             <div className="info-item">
               <span className="info-label">Elevation Gain</span>
-              <span className="info-value">{formatElevationChange(blendedRoute.elevationGain, true)}</span>
+              <span className="info-value">{formatElevationChange(blendedRoute.elevationGain)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Max Elevation</span>
@@ -171,7 +171,7 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
             </div>
             <div className="info-item">
               <span className="info-label">Elevation Gain</span>
-              <span className="info-value">{formatElevationChange(route.stats.elevationGain, true)}</span>
+              <span className="info-value">{formatElevationChange(route.stats.elevationGain)}</span>
             </div>
             <div className="info-item">
               <span className="info-label">Max Elevation</span>

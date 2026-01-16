@@ -26,7 +26,6 @@ export function ElevationProfiles({ routes, visibleRoutes }: ElevationProfilesPr
 
   return (
     <div className="elevation-profiles">
-      <h2 className="profiles-title">Elevation Profiles</h2>
       <div className="profiles-container">
         {/* Blended route chart (shown at top when available) */}
         {showBlendedChart && (

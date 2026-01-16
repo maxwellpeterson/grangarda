@@ -210,7 +210,7 @@ export function ElevationChart({ route, isVisible }: ElevationChartProps) {
         <div className="chart-stats">
           <span>{formatDistance(route.stats.distance)}</span>
           <span className="stat-divider">|</span>
-          <span>{formatElevationChange(route.stats.elevationGain, true)}</span>
+          <span>{formatElevationChange(route.stats.elevationGain)}</span>
         </div>
       </div>
       <div className="chart-wrapper" ref={chartWrapperRef}>

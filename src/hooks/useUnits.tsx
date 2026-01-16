@@ -14,7 +14,7 @@ interface UnitsContextValue {
   setUnits: (units: UnitSystem) => void;
   formatDistance: (km: number, decimals?: number) => string;
   formatElevation: (meters: number) => string;
-  formatElevationChange: (meters: number, positive?: boolean) => string;
+  formatElevationChange: (meters: number) => string;
   distanceUnit: string;
   elevationUnit: string;
 }
@@ -55,13 +55,12 @@ export function UnitsProvider({ children }: { children: ReactNode }) {
   );
 
   const formatElevationChange = useCallback(
-    (meters: number, positive = true): string => {
-      const sign = positive ? '+' : '-';
+    (meters: number): string => {
       if (units === 'metric') {
-        return `${sign}${Math.round(Math.abs(meters)).toLocaleString()} m`;
+        return `${Math.round(Math.abs(meters)).toLocaleString()} m`;
       }
       const feet = Math.round(Math.abs(meters) * METERS_TO_FEET);
-      return `${sign}${feet.toLocaleString()} ft`;
+      return `${feet.toLocaleString()} ft`;
     },
     [units]
   );

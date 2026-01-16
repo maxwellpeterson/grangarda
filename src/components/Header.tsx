@@ -25,7 +25,7 @@ export function Header() {
           <span className="logo-gran">Gran</span>
           <span className="logo-garda">Garda</span>
         </h1>
-        <p className="tagline">Route Comparison</p>
+        <p className="tagline">Route Builder</p>
       </div>
       <div className="header-actions">
         {isBuilding ? (
@@ -80,12 +80,12 @@ export function Header() {
               onClick={toggleUnits}
               aria-label={`Switch to ${units === 'metric' ? 'imperial' : 'metric'} units`}
             >
-              <span className={`unit-option ${units === 'metric' ? 'active' : ''}`}>
-                km/m
+              <span className={`unit-option ${units === 'imperial' ? 'active' : ''}`}>
+                mi
               </span>
               <span className="unit-divider">/</span>
-              <span className={`unit-option ${units === 'imperial' ? 'active' : ''}`}>
-                mi/ft
+              <span className={`unit-option ${units === 'metric' ? 'active' : ''}`}>
+                km
               </span>
             </button>
             <a
