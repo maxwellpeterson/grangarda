@@ -35,9 +35,6 @@ export function Map({ routes, visibleRoutes }: MapProps) {
       bearing: 0,
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.current.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
-
     map.current.on('load', () => {
       setMapLoaded(true);
     });
@@ -66,8 +63,10 @@ export function Map({ routes, visibleRoutes }: MapProps) {
       const sourceId = `route-${route.id}`;
       const layerId = `route-${route.id}-line`;
       const outlineLayerId = `route-${route.id}-outline`;
+      const hitAreaLayerId = `route-${route.id}-hit-area`;
 
       // Remove existing layers/sources if they exist
+      if (m.getLayer(hitAreaLayerId)) m.removeLayer(hitAreaLayerId);
       if (m.getLayer(layerId)) m.removeLayer(layerId);
       if (m.getLayer(outlineLayerId)) m.removeLayer(outlineLayerId);
       if (m.getSource(sourceId)) m.removeSource(sourceId);
@@ -112,17 +111,34 @@ export function Map({ routes, visibleRoutes }: MapProps) {
         },
       });
 
-      // Add hover interactions
-      m.on('mouseenter', layerId, () => {
+      // Add invisible hit area layer (wider, for easier hover detection)
+      m.addLayer({
+        id: hitAreaLayerId,
+        type: 'line',
+        source: sourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+          visibility: visibleRoutes.has(route.id) ? 'visible' : 'none',
+        },
+        paint: {
+          'line-color': route.color,
+          'line-width': 24,
+          'line-opacity': 0,
+        },
+      });
+
+      // Add hover interactions to the hit area layer
+      m.on('mouseenter', hitAreaLayerId, () => {
         m.getCanvas().style.cursor = 'pointer';
       });
 
-      m.on('mouseleave', layerId, () => {
+      m.on('mouseleave', hitAreaLayerId, () => {
         m.getCanvas().style.cursor = '';
         clearHover();
       });
 
-      m.on('mousemove', layerId, (e) => {
+      m.on('mousemove', hitAreaLayerId, (e) => {
         if (e.lngLat) {
           const point = findClosestPoint(
             route.elevationProfile,
@@ -166,6 +182,7 @@ export function Map({ routes, visibleRoutes }: MapProps) {
     routes.forEach((route) => {
       const layerId = `route-${route.id}-line`;
       const outlineLayerId = `route-${route.id}-outline`;
+      const hitAreaLayerId = `route-${route.id}-hit-area`;
       const visibility = visibleRoutes.has(route.id) ? 'visible' : 'none';
 
       if (map.current?.getLayer(layerId)) {
@@ -173,6 +190,9 @@ export function Map({ routes, visibleRoutes }: MapProps) {
       }
       if (map.current?.getLayer(outlineLayerId)) {
         map.current.setLayoutProperty(outlineLayerId, 'visibility', visibility);
+      }
+      if (map.current?.getLayer(hitAreaLayerId)) {
+        map.current.setLayoutProperty(hitAreaLayerId, 'visibility', visibility);
       }
     });
   }, [mapLoaded, routes, visibleRoutes]);
