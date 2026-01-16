@@ -10,10 +10,13 @@ export function Header() {
     isComplete,
     divergingSegments,
     selections,
+    blendedRoute,
+    resetSelections,
   } = useBlendedRoute();
 
   const selectedCount = selections.size;
   const totalCount = divergingSegments.length;
+  const hasBlendedRoute = blendedRoute !== null;
 
   return (
     <header className="header">
@@ -49,12 +52,29 @@ export function Header() {
           </>
         ) : (
           <>
-            <button
-              className="build-route-button"
-              onClick={enterBuildMode}
-            >
-              Build Route
-            </button>
+            {hasBlendedRoute ? (
+              <>
+                <button
+                  className="edit-route-button"
+                  onClick={enterBuildMode}
+                >
+                  Edit Route
+                </button>
+                <button
+                  className="clear-route-button"
+                  onClick={resetSelections}
+                >
+                  Clear
+                </button>
+              </>
+            ) : (
+              <button
+                className="build-route-button"
+                onClick={enterBuildMode}
+              >
+                Build Route
+              </button>
+            )}
             <button
               className="unit-toggle"
               onClick={toggleUnits}
