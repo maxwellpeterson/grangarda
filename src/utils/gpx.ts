@@ -125,6 +125,7 @@ function smoothGrade(profile: ElevationPoint[], windowSize: number): ElevationPo
 
 /**
  * Calculate route statistics
+ * Sums all positive elevation differences (no threshold filtering)
  */
 function calculateStats(profile: ElevationPoint[]): RouteStats {
   let elevationGain = 0;

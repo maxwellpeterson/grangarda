@@ -175,6 +175,7 @@ function analyzeOverlap(
 
 /**
  * Calculate segment statistics
+ * Sums all positive elevation differences (no threshold filtering)
  */
 function calculateSegmentStats(points: RoutePoint[]): SegmentStats {
   if (points.length === 0) {
@@ -191,13 +192,14 @@ function calculateSegmentStats(points: RoutePoint[]): SegmentStats {
   let totalDistance = 0;
   
   for (let i = 1; i < points.length; i++) {
-    const elevDiff = points[i].elevation - points[i - 1].elevation;
-    if (elevDiff > 0) {
-      elevationGain += elevDiff;
-    } else {
-      elevationLoss += Math.abs(elevDiff);
-    }
     totalDistance += haversineDistance(points[i - 1], points[i]);
+    
+    const diff = points[i].elevation - points[i - 1].elevation;
+    if (diff > 0) {
+      elevationGain += diff;
+    } else {
+      elevationLoss += Math.abs(diff);
+    }
   }
   
   return {
