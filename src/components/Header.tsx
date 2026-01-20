@@ -1,12 +1,12 @@
-import { useUnits } from '../hooks/useUnits';
-import { useBlendedRoute } from '../hooks/useBlendedRoute';
+import { useUnits } from "../hooks/useUnits";
+import { useBlendedRoute } from "../hooks/useBlendedRoute";
 
 export function Header() {
   const { units, toggleUnits } = useUnits();
-  const { 
-    isBuilding, 
-    enterBuildMode, 
-    exitBuildMode, 
+  const {
+    isBuilding,
+    enterBuildMode,
+    exitBuildMode,
     isComplete,
     divergingSegments,
     selections,
@@ -54,10 +54,7 @@ export function Header() {
           <>
             {hasBlendedRoute ? (
               <>
-                <button
-                  className="edit-route-button"
-                  onClick={enterBuildMode}
-                >
+                <button className="edit-route-button" onClick={enterBuildMode}>
                   Edit Route
                 </button>
                 <button
@@ -68,34 +65,27 @@ export function Header() {
                 </button>
               </>
             ) : (
-              <button
-                className="build-route-button"
-                onClick={enterBuildMode}
-              >
+              <button className="build-route-button" onClick={enterBuildMode}>
                 Build Route
               </button>
             )}
             <button
               className="unit-toggle"
               onClick={toggleUnits}
-              aria-label={`Switch to ${units === 'metric' ? 'imperial' : 'metric'} units`}
+              aria-label={`Switch to ${units === "metric" ? "imperial" : "metric"} units`}
             >
-              <span className={`unit-option ${units === 'imperial' ? 'active' : ''}`}>
+              <span
+                className={`unit-option ${units === "imperial" ? "active" : ""}`}
+              >
                 mi
               </span>
               <span className="unit-divider">/</span>
-              <span className={`unit-option ${units === 'metric' ? 'active' : ''}`}>
+              <span
+                className={`unit-option ${units === "metric" ? "active" : ""}`}
+              >
                 km
               </span>
             </button>
-            <a
-              href="https://grangarda.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="header-link"
-            >
-              Official Site
-            </a>
           </>
         )}
       </div>

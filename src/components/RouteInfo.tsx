@@ -1,13 +1,14 @@
-import { useMemo, useState, useCallback } from 'react';
-import type { RouteData } from '../types/route';
-import { useUnits } from '../hooks/useUnits';
-import { useBlendedRoute } from '../hooks/useBlendedRoute';
-import { ROUTE_CONFIG } from '../hooks/useRouteData';
-import type { BlendedRoute } from '../types/segments';
+import { useMemo, useState, useCallback } from "react";
+import type { RouteData } from "../types/route";
+import { useUnits } from "../hooks/useUnits";
+import { useBlendedRoute } from "../hooks/useBlendedRoute";
+import { ROUTE_CONFIG } from "../hooks/useRouteData";
+import type { BlendedRoute } from "../types/segments";
+import { DaySplitter } from "./DaySplitter";
 
 interface RouteInfoProps {
   routes: RouteData[];
-  visibleRoutes: Set<'gravel' | 'tarmac'>;
+  visibleRoutes: Set<"gravel" | "tarmac">;
 }
 
 /**
@@ -16,10 +17,11 @@ interface RouteInfoProps {
 function generateGpx(blendedRoute: BlendedRoute): string {
   const timestamp = new Date().toISOString();
   const points = blendedRoute.coordinates
-    .map(([lng, lat, ele]) => 
-      `      <trkpt lat="${lat}" lon="${lng}"><ele>${ele.toFixed(1)}</ele></trkpt>`
+    .map(
+      ([lng, lat, ele]) =>
+        `      <trkpt lat="${lat}" lon="${lng}"><ele>${ele.toFixed(1)}</ele></trkpt>`,
     )
-    .join('\n');
+    .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="GranGarda Route Builder"
@@ -41,7 +43,8 @@ ${points}
 
 export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
   const { formatDistance, formatElevation, formatElevationChange } = useUnits();
-  const { blendedRoute, isBuilding, selections, divergingSegments } = useBlendedRoute();
+  const { blendedRoute, isBuilding, selections, divergingSegments } =
+    useBlendedRoute();
   const [copySuccess, setCopySuccess] = useState(false);
   const visibleRoutesList = routes.filter((r) => visibleRoutes.has(r.id));
 
@@ -61,20 +64,20 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      console.error('Failed to copy link:', err);
+      console.error("Failed to copy link:", err);
     }
   }, []);
 
   const handleDownloadGpx = useCallback(() => {
     if (!blendedRoute) return;
-    
+
     const gpxContent = generateGpx(blendedRoute);
-    const blob = new Blob([gpxContent], { type: 'application/gpx+xml' });
+    const blob = new Blob([gpxContent], { type: "application/gpx+xml" });
     const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
+
+    const link = document.createElement("a");
     link.href = url;
-    link.download = 'grangarda-custom-route.gpx';
+    link.download = "grangarda-custom-route.gpx";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -103,29 +106,38 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
           <div className="info-grid">
             <div className="info-item">
               <span className="info-label">Distance</span>
-              <span className="info-value">{formatDistance(blendedRoute.distanceKm, 1)}</span>
+              <span className="info-value">
+                {formatDistance(blendedRoute.distanceKm, 1)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Elevation Gain</span>
-              <span className="info-value">{formatElevationChange(blendedRoute.elevationGain)}</span>
+              <span className="info-value">
+                {formatElevationChange(blendedRoute.elevationGain)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Max Elevation</span>
-              <span className="info-value">{formatElevation(blendedElevationStats.max)}</span>
+              <span className="info-value">
+                {formatElevation(blendedElevationStats.max)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Min Elevation</span>
-              <span className="info-value">{formatElevation(blendedElevationStats.min)}</span>
+              <span className="info-value">
+                {formatElevation(blendedElevationStats.min)}
+              </span>
             </div>
           </div>
+          <DaySplitter />
           <div className="blended-route-actions">
-            <button 
+            <button
               className="action-button copy-link-button"
               onClick={handleCopyLink}
             >
-              {copySuccess ? 'Copied!' : 'Copy Link'}
+              {copySuccess ? "Copied!" : "Copy Link"}
             </button>
-            <button 
+            <button
               className="action-button download-gpx-button"
               onClick={handleDownloadGpx}
             >
@@ -140,16 +152,19 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
         <div className="building-progress-card">
           <h3>Building Custom Route</h3>
           <p>
-            Click on diverging segments on the map to choose between gravel and tarmac.
+            Click on diverging segments on the map to choose between gravel and
+            tarmac.
           </p>
           <div className="progress-info">
             <span className="progress-count">
               {selections.size} of {divergingSegments.length} segments selected
             </span>
             <div className="progress-bar">
-              <div 
+              <div
                 className="progress-fill"
-                style={{ width: `${(selections.size / divergingSegments.length) * 100}%` }}
+                style={{
+                  width: `${(selections.size / divergingSegments.length) * 100}%`,
+                }}
               />
             </div>
           </div>
@@ -167,19 +182,27 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
           <div className="info-grid">
             <div className="info-item">
               <span className="info-label">Distance</span>
-              <span className="info-value">{formatDistance(route.stats.distance, 1)}</span>
+              <span className="info-value">
+                {formatDistance(route.stats.distance, 1)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Elevation Gain</span>
-              <span className="info-value">{formatElevationChange(route.stats.elevationGain)}</span>
+              <span className="info-value">
+                {formatElevationChange(route.stats.elevationGain)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Max Elevation</span>
-              <span className="info-value">{formatElevation(route.stats.maxElevation)}</span>
+              <span className="info-value">
+                {formatElevation(route.stats.maxElevation)}
+              </span>
             </div>
             <div className="info-item">
               <span className="info-label">Min Elevation</span>
-              <span className="info-value">{formatElevation(route.stats.minElevation)}</span>
+              <span className="info-value">
+                {formatElevation(route.stats.minElevation)}
+              </span>
             </div>
           </div>
         </div>
