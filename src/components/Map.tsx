@@ -607,11 +607,22 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     if (!marker.current) return;
 
     if (hoverState.point && hoverState.routeId) {
-      const route = routes.find((r) => r.id === hoverState.routeId);
-      if (route) {
+      // Handle blended route hover
+      if (hoverState.routeId === "blended") {
         marker.current.setLngLat([hoverState.point.lng, hoverState.point.lat]);
         marker.current.getElement().style.display = "block";
-        marker.current.getElement().style.backgroundColor = route.color;
+        marker.current.getElement().style.backgroundColor =
+          ROUTE_CONFIG.blended.color;
+      } else {
+        const route = routes.find((r) => r.id === hoverState.routeId);
+        if (route) {
+          marker.current.setLngLat([
+            hoverState.point.lng,
+            hoverState.point.lat,
+          ]);
+          marker.current.getElement().style.display = "block";
+          marker.current.getElement().style.backgroundColor = route.color;
+        }
       }
     } else {
       marker.current.getElement().style.display = "none";

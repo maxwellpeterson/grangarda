@@ -9,9 +9,11 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { BlendedRoute } from "../types/segments";
+import type { ElevationPoint } from "../types/route";
 import { useUnits, kmToMiles, metersToFeet } from "../hooks/useUnits";
 import { ROUTE_CONFIG } from "../hooks/useRouteData";
 import { useBlendedRoute } from "../hooks/useBlendedRoute";
+import { useHoverSync } from "../hooks/useHoverSync";
 import { MultiRangeSlider } from "./MultiRangeSlider";
 import { DayStatsTable } from "./DayStatsTable";
 
@@ -23,6 +25,8 @@ interface ChartDataPoint {
   distance: number;
   elevation: number;
   distanceRaw: number;
+  lat: number;
+  lng: number;
 }
 
 export function BlendedElevationChart({
@@ -43,6 +47,7 @@ export function BlendedElevationChart({
     setBreakpoints,
     daySplits,
   } = useBlendedRoute();
+  const { setHover, clearHover } = useHoverSync();
 
   const handleDayCountChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -98,6 +103,8 @@ export function BlendedElevationChart({
         distance: displayDistance,
         elevation: displayElevation,
         distanceRaw: cumulativeDistance,
+        lat,
+        lng,
       });
     }
 
@@ -126,6 +133,31 @@ export function BlendedElevationChart({
     const totalDistance = chartData[chartData.length - 1].distance;
     return breakpoints.map((pct) => (pct / 100) * totalDistance);
   }, [breakpoints, chartData]);
+
+  // Hover handlers for map sync
+  const handleMouseMove = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (state: any) => {
+      if (
+        state?.activeTooltipIndex != null &&
+        chartData[state.activeTooltipIndex]
+      ) {
+        const data = chartData[state.activeTooltipIndex];
+        const point: ElevationPoint = {
+          distance: data.distanceRaw,
+          elevation: data.elevation,
+          lat: data.lat,
+          lng: data.lng,
+        };
+        setHover("blended", point, "chart");
+      }
+    },
+    [setHover, chartData],
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    clearHover();
+  }, [clearHover]);
 
   const CustomTooltip = ({
     active,
@@ -177,6 +209,8 @@ export function BlendedElevationChart({
           <AreaChart
             data={chartData}
             margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
           >
             <defs>
               <linearGradient id="gradient-blended" x1="0" y1="0" x2="0" y2="1">
@@ -234,13 +268,13 @@ export function BlendedElevationChart({
             className="day-selector"
             aria-label="Number of days"
           >
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
               <option key={n} value={n}>
-                {n} {n === 1 ? "day" : "days"}
+                {n}d
               </option>
             ))}
           </select>
-          {numberOfDays > 1 && (
+          {numberOfDays > 1 ? (
             <div className="slider-chart-aligned">
               <MultiRangeSlider
                 values={breakpoints}
@@ -248,6 +282,8 @@ export function BlendedElevationChart({
                 minGap={5}
               />
             </div>
+          ) : (
+            <span className="single-day-message">That's a big one!</span>
           )}
         </div>
 

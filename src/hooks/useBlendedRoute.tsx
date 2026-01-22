@@ -5,6 +5,7 @@ import {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import type {
@@ -206,15 +207,14 @@ export function BlendedRouteProvider({
     return getBreakpointCoordinates(blendedRoute, breakpoints);
   }, [blendedRoute, breakpoints]);
 
-  // Reset day splits when blended route changes - default to 4 days
-  useEffect(() => {
-    setNumberOfDaysState(4);
-    setBreakpointsState([25, 50, 75]);
-  }, [savedSelections]);
+  // Track if we've done the initial URL load
+  const initialLoadDone = useRef(false);
+  const prevSavedSelectionsSize = useRef(0);
 
   // Load from URL on mount
   useEffect(() => {
-    if (segments.length === 0) return;
+    if (segments.length === 0 || initialLoadDone.current) return;
+    initialLoadDone.current = true;
 
     const params = new URLSearchParams(window.location.search);
     const routeParam = params.get("route");
@@ -225,8 +225,9 @@ export function BlendedRouteProvider({
       if (decoded.size > 0) {
         setSelections(decoded);
         setSavedSelections(decoded);
+        prevSavedSelectionsSize.current = decoded.size;
 
-        // Load day splits if present
+        // Load day splits if present, otherwise use default 4 days
         if (daysParam) {
           const loadedBreakpoints = daysParam
             .split(",")
@@ -240,6 +241,22 @@ export function BlendedRouteProvider({
       }
     }
   }, [segments]);
+
+  // Reset day splits when blended route changes (but not on initial URL load)
+  useEffect(() => {
+    // Skip during initial load
+    if (!initialLoadDone.current) return;
+
+    // Only reset if savedSelections size actually changed (indicates a new route was built)
+    if (
+      savedSelections.size !== prevSavedSelectionsSize.current &&
+      savedSelections.size > 0
+    ) {
+      prevSavedSelectionsSize.current = savedSelections.size;
+      setNumberOfDaysState(4);
+      setBreakpointsState([25, 50, 75]);
+    }
+  }, [savedSelections]);
 
   // Update URL when saved selections or breakpoints change
   useEffect(() => {

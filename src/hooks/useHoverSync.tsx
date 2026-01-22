@@ -4,15 +4,15 @@ import {
   useState,
   useCallback,
   type ReactNode,
-} from 'react';
-import type { HoverState, ElevationPoint } from '../types/route';
+} from "react";
+import type { HoverState, ElevationPoint } from "../types/route";
 
 interface HoverContextValue {
   hoverState: HoverState;
   setHover: (
-    routeId: 'gravel' | 'tarmac' | null,
+    routeId: "gravel" | "tarmac" | "blended" | null,
     point: ElevationPoint | null,
-    source: 'map' | 'chart' | null
+    source: "map" | "chart" | null,
   ) => void;
   clearHover: () => void;
 }
@@ -30,13 +30,13 @@ export function HoverProvider({ children }: { children: ReactNode }) {
 
   const setHover = useCallback(
     (
-      routeId: 'gravel' | 'tarmac' | null,
+      routeId: "gravel" | "tarmac" | "blended" | null,
       point: ElevationPoint | null,
-      source: 'map' | 'chart' | null
+      source: "map" | "chart" | null,
     ) => {
       setHoverState({ routeId, point, source });
     },
-    []
+    [],
   );
 
   const clearHover = useCallback(() => {
@@ -53,7 +53,7 @@ export function HoverProvider({ children }: { children: ReactNode }) {
 export function useHoverSync(): HoverContextValue {
   const context = useContext(HoverContext);
   if (!context) {
-    throw new Error('useHoverSync must be used within a HoverProvider');
+    throw new Error("useHoverSync must be used within a HoverProvider");
   }
   return context;
 }

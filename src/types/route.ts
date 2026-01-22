@@ -1,4 +1,4 @@
-import type { Feature, LineString } from 'geojson';
+import type { Feature, LineString } from "geojson";
 
 export interface ElevationPoint {
   distance: number; // km from start
@@ -9,7 +9,7 @@ export interface ElevationPoint {
 }
 
 export interface RouteData {
-  id: 'gravel' | 'tarmac';
+  id: "gravel" | "tarmac";
   name: string;
   color: string;
   fillColor: string;
@@ -27,7 +27,7 @@ export interface RouteStats {
 }
 
 export interface HoverState {
-  routeId: 'gravel' | 'tarmac' | null;
+  routeId: "gravel" | "tarmac" | "blended" | null;
   point: ElevationPoint | null;
-  source: 'map' | 'chart' | null;
+  source: "map" | "chart" | null;
 }
