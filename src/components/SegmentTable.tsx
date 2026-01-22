@@ -1,7 +1,8 @@
-import { useBlendedRoute } from '../hooks/useBlendedRoute';
-import { useUnits } from '../hooks/useUnits';
-import { ROUTE_CONFIG } from '../hooks/useRouteData';
-import type { Segment, RouteChoice } from '../types/segments';
+import { useState } from "react";
+import { useBlendedRoute } from "../hooks/useBlendedRoute";
+import { useUnits } from "../hooks/useUnits";
+import { ROUTE_CONFIG } from "../hooks/useRouteData";
+import type { Segment, RouteChoice } from "../types/segments";
 
 interface SegmentTableProps {
   onSegmentFocus: (segment: Segment) => void;
@@ -16,6 +17,7 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
     setSelectedSegment,
   } = useBlendedRoute();
   const { formatDistance, formatElevation } = useUnits();
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
   const handleRowClick = (segment: Segment) => {
     setSelectedSegment(segment.id);
@@ -25,7 +27,7 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
   const handleChoiceClick = (
     e: React.MouseEvent,
     segmentId: string,
-    choice: RouteChoice
+    choice: RouteChoice,
   ) => {
     e.stopPropagation();
     selectSegment(segmentId, choice);
@@ -34,7 +36,7 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
   const handleFeelingLucky = () => {
     divergingSegments.forEach((segment) => {
       if (!selections.has(segment.id)) {
-        const choice: RouteChoice = Math.random() < 0.5 ? 'gravel' : 'tarmac';
+        const choice: RouteChoice = Math.random() < 0.5 ? "gravel" : "tarmac";
         selectSegment(segment.id, choice);
       }
     });
@@ -51,13 +53,16 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
             {selections.size} of {divergingSegments.length} selected
           </span>
           {remainingCount > 0 && (
-            <button className="feeling-lucky-button" onClick={handleFeelingLucky}>
+            <button
+              className="feeling-lucky-button"
+              onClick={handleFeelingLucky}
+            >
               I'm Feeling Lucky
             </button>
           )}
         </div>
       </div>
-      
+
       <div className="segment-table-scroll">
         <table className="segment-table">
           <thead>
@@ -71,22 +76,32 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
             {divergingSegments.map((segment, index) => {
               const currentChoice = selections.get(segment.id);
               const isActive = selectedSegmentId === segment.id;
-              
+
               return (
                 <tr
                   key={segment.id}
-                  className={`segment-row ${isActive ? 'active' : ''} ${currentChoice ? 'has-selection' : ''}`}
+                  className={`segment-row ${isActive ? "active" : ""} ${currentChoice ? "has-selection" : ""}`}
                   onClick={() => handleRowClick(segment)}
+                  onMouseEnter={() => setHoveredRowId(segment.id)}
+                  onMouseLeave={() => setHoveredRowId(null)}
                 >
                   <td className="col-segment">
-                    <span className="segment-number">{index + 1}</span>
+                    <span className="segment-number">
+                      {hoveredRowId === segment.id ? "🔍" : index + 1}
+                    </span>
                   </td>
-                  
+
                   <td className="col-gravel">
                     <button
-                      className={`choice-button ${currentChoice === 'gravel' ? 'selected' : ''}`}
-                      onClick={(e) => handleChoiceClick(e, segment.id, 'gravel')}
-                      style={{ '--choice-color': ROUTE_CONFIG.gravel.color } as React.CSSProperties}
+                      className={`choice-button ${currentChoice === "gravel" ? "selected" : ""}`}
+                      onClick={(e) =>
+                        handleChoiceClick(e, segment.id, "gravel")
+                      }
+                      style={
+                        {
+                          "--choice-color": ROUTE_CONFIG.gravel.color,
+                        } as React.CSSProperties
+                      }
                     >
                       <span className="choice-distance">
                         {formatDistance(segment.gravel.distanceKm)}
@@ -96,12 +111,18 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
                       </span>
                     </button>
                   </td>
-                  
+
                   <td className="col-tarmac">
                     <button
-                      className={`choice-button ${currentChoice === 'tarmac' ? 'selected' : ''}`}
-                      onClick={(e) => handleChoiceClick(e, segment.id, 'tarmac')}
-                      style={{ '--choice-color': ROUTE_CONFIG.tarmac.color } as React.CSSProperties}
+                      className={`choice-button ${currentChoice === "tarmac" ? "selected" : ""}`}
+                      onClick={(e) =>
+                        handleChoiceClick(e, segment.id, "tarmac")
+                      }
+                      style={
+                        {
+                          "--choice-color": ROUTE_CONFIG.tarmac.color,
+                        } as React.CSSProperties
+                      }
                     >
                       <span className="choice-distance">
                         {formatDistance(segment.tarmac.distanceKm)}
