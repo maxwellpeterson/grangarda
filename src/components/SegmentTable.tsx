@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBlendedRoute } from "../hooks/useBlendedRoute";
 import { useUnits } from "../hooks/useUnits";
 import { ROUTE_CONFIG } from "../hooks/useRouteData";
@@ -18,6 +18,11 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
   } = useBlendedRoute();
   const { formatDistance, formatElevation } = useUnits();
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   const handleRowClick = (segment: Segment) => {
     setSelectedSegment(segment.id);
@@ -87,7 +92,9 @@ export function SegmentTable({ onSegmentFocus }: SegmentTableProps) {
                 >
                   <td className="col-segment">
                     <span className="segment-number">
-                      {hoveredRowId === segment.id ? "🔍" : index + 1}
+                      {!isTouchDevice && hoveredRowId === segment.id
+                        ? "🔍"
+                        : index + 1}
                     </span>
                   </td>
 
