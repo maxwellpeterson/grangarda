@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -6,10 +6,14 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import type { BlendedRoute } from '../types/segments';
-import { useUnits, kmToMiles, metersToFeet } from '../hooks/useUnits';
-import { ROUTE_CONFIG } from '../hooks/useRouteData';
+  ReferenceLine,
+} from "recharts";
+import type { BlendedRoute } from "../types/segments";
+import { useUnits, kmToMiles, metersToFeet } from "../hooks/useUnits";
+import { ROUTE_CONFIG } from "../hooks/useRouteData";
+import { useBlendedRoute } from "../hooks/useBlendedRoute";
+import { MultiRangeSlider } from "./MultiRangeSlider";
+import { DayStatsTable } from "./DayStatsTable";
 
 interface BlendedElevationChartProps {
   blendedRoute: BlendedRoute;
@@ -21,9 +25,43 @@ interface ChartDataPoint {
   distanceRaw: number;
 }
 
-export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartProps) {
-  const { units, formatDistance, formatElevationChange, distanceUnit, elevationUnit } = useUnits();
+export function BlendedElevationChart({
+  blendedRoute,
+}: BlendedElevationChartProps) {
+  const {
+    units,
+    formatDistance,
+    formatElevationChange,
+    distanceUnit,
+    elevationUnit,
+  } = useUnits();
   const color = ROUTE_CONFIG.blended.color;
+  const {
+    numberOfDays,
+    setNumberOfDays,
+    breakpoints,
+    setBreakpoints,
+    daySplits,
+  } = useBlendedRoute();
+
+  const handleDayCountChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const days = parseInt(e.target.value, 10);
+      setNumberOfDays(days);
+
+      // Auto-generate evenly distributed breakpoints
+      if (days > 1) {
+        const newBreakpoints = Array.from(
+          { length: days - 1 },
+          (_, i) => ((i + 1) / days) * 100,
+        );
+        setBreakpoints(newBreakpoints);
+      } else {
+        setBreakpoints([]);
+      }
+    },
+    [setNumberOfDays, setBreakpoints],
+  );
 
   // Convert coordinates to chart data
   const chartData = useMemo<ChartDataPoint[]>(() => {
@@ -32,7 +70,7 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
 
     for (let i = 0; i < blendedRoute.coordinates.length; i++) {
       const [lng, lat, elevation] = blendedRoute.coordinates[i];
-      
+
       // Calculate distance from previous point
       if (i > 0) {
         const [prevLng, prevLat] = blendedRoute.coordinates[i - 1];
@@ -50,11 +88,11 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
       }
 
       const displayDistance =
-        units === 'imperial'
+        units === "imperial"
           ? Math.round(kmToMiles(cumulativeDistance) * 10) / 10
           : Math.round(cumulativeDistance * 10) / 10;
       const displayElevation =
-        units === 'imperial' ? metersToFeet(elevation) : Math.round(elevation);
+        units === "imperial" ? metersToFeet(elevation) : Math.round(elevation);
 
       points.push({
         distance: displayDistance,
@@ -81,6 +119,13 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
     const padding = (max - min) * 0.1;
     return [Math.floor(min - padding), Math.ceil(max + padding)];
   }, [chartData]);
+
+  // Calculate breakpoint distances for reference lines
+  const breakpointDistances = useMemo(() => {
+    if (breakpoints.length === 0 || chartData.length === 0) return [];
+    const totalDistance = chartData[chartData.length - 1].distance;
+    return breakpoints.map((pct) => (pct / 100) * totalDistance);
+  }, [breakpoints, chartData]);
 
   const CustomTooltip = ({
     active,
@@ -114,7 +159,10 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
     <div className="elevation-chart blended-elevation-chart">
       <div className="chart-header">
         <div className="chart-title">
-          <span className="route-indicator" style={{ backgroundColor: color }} />
+          <span
+            className="route-indicator"
+            style={{ backgroundColor: color }}
+          />
           {ROUTE_CONFIG.blended.name}
           <span className="blended-badge">Custom</span>
         </div>
@@ -138,15 +186,15 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
             </defs>
             <XAxis
               dataKey="distance"
-              tick={{ fill: '#8892a0', fontSize: 11 }}
-              tickLine={{ stroke: '#8892a0' }}
-              axisLine={{ stroke: '#3d4555' }}
+              tick={{ fill: "#8892a0", fontSize: 11 }}
+              tickLine={{ stroke: "#8892a0" }}
+              axisLine={{ stroke: "#3d4555" }}
             />
             <YAxis
               domain={yDomain}
-              tick={{ fill: '#8892a0', fontSize: 11 }}
-              tickLine={{ stroke: '#8892a0' }}
-              axisLine={{ stroke: '#3d4555' }}
+              tick={{ fill: "#8892a0", fontSize: 11 }}
+              tickLine={{ stroke: "#8892a0" }}
+              axisLine={{ stroke: "#3d4555" }}
               tickFormatter={(value) => `${value.toLocaleString()}`}
               width={55}
             />
@@ -162,8 +210,48 @@ export function BlendedElevationChart({ blendedRoute }: BlendedElevationChartPro
               fill="url(#gradient-blended)"
               isAnimationActive={false}
             />
+            {/* Reference lines for day breakpoints */}
+            {breakpointDistances.map((distance, index) => (
+              <ReferenceLine
+                key={index}
+                x={distance}
+                stroke={color}
+                strokeWidth={2}
+                strokeDasharray="4 4"
+              />
+            ))}
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Day Splitter UI */}
+      <div className="day-splitter day-splitter-chart">
+        <div className="day-splitter-row">
+          <select
+            id="day-count"
+            value={numberOfDays}
+            onChange={handleDayCountChange}
+            className="day-selector"
+            aria-label="Number of days"
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              <option key={n} value={n}>
+                {n} {n === 1 ? "day" : "days"}
+              </option>
+            ))}
+          </select>
+          {numberOfDays > 1 && (
+            <div className="slider-chart-aligned">
+              <MultiRangeSlider
+                values={breakpoints}
+                onChange={setBreakpoints}
+                minGap={5}
+              />
+            </div>
+          )}
+        </div>
+
+        {numberOfDays > 1 && <DayStatsTable daySplits={daySplits} />}
       </div>
     </div>
   );

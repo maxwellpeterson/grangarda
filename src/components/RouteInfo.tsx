@@ -4,7 +4,6 @@ import { useUnits } from "../hooks/useUnits";
 import { useBlendedRoute } from "../hooks/useBlendedRoute";
 import { ROUTE_CONFIG } from "../hooks/useRouteData";
 import type { BlendedRoute } from "../types/segments";
-import { DaySplitter } from "./DaySplitter";
 
 interface RouteInfoProps {
   routes: RouteData[];
@@ -129,7 +128,6 @@ export function RouteInfo({ routes, visibleRoutes }: RouteInfoProps) {
               </span>
             </div>
           </div>
-          <DaySplitter />
           <div className="blended-route-actions">
             <button
               className="action-button copy-link-button"

@@ -174,9 +174,9 @@ export function BlendedRouteProvider({
     null,
   );
 
-  // Day splitting state
-  const [numberOfDays, setNumberOfDaysState] = useState(1);
-  const [breakpoints, setBreakpointsState] = useState<number[]>([]);
+  // Day splitting state - default to 4 days
+  const [numberOfDays, setNumberOfDaysState] = useState(4);
+  const [breakpoints, setBreakpointsState] = useState<number[]>([25, 50, 75]);
 
   const divergingSegments = useMemo(
     () => segments.filter((s) => s.type === "diverging"),
@@ -206,10 +206,10 @@ export function BlendedRouteProvider({
     return getBreakpointCoordinates(blendedRoute, breakpoints);
   }, [blendedRoute, breakpoints]);
 
-  // Reset day splits when blended route changes
+  // Reset day splits when blended route changes - default to 4 days
   useEffect(() => {
-    setNumberOfDaysState(1);
-    setBreakpointsState([]);
+    setNumberOfDaysState(4);
+    setBreakpointsState([25, 50, 75]);
   }, [savedSelections]);
 
   // Load from URL on mount
