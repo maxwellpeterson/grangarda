@@ -1,7 +1,7 @@
 # Creates a Worker Preview deployment on pull requests
 #
-# Required secret: CLOUDFLARE_API_TOKEN
-# Add it at: Settings → Secrets and variables → Actions → New repository secret
+# Required secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# Add them at: Settings → Secrets and variables → Actions → New repository secret
 
 name: Preview
 
@@ -34,6 +34,7 @@ jobs:
         id: preview
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set +e
           output=$(npm run deploy:preview 2>&1)
