@@ -8,9 +8,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "deploy:preview": "npm run build && wrangler deploy --env preview"
+    "deploy:preview": "npm run build && wrangler preview"
   },
   "dependencies": {
     "@mapbox/togeojson": "^0.16.2",
