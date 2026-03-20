@@ -38,7 +38,8 @@ jobs:
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
         run: |
           set +e
-          output=$(npm run deploy:preview -- --name "${{ github.head_ref }}" 2>&1)
+          preview_name=$(echo "${{ github.head_ref }}" | cut -c1-53)
+          output=$(npm run deploy:preview -- --name "$preview_name" 2>&1)
           exit_code=$?
           set -e
           echo "$output"
