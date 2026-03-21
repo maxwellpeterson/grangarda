@@ -1,6 +1,6 @@
 # Creates a Worker Preview deployment on pull requests
 #
-# Required secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# Required secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, VITE_MAPBOX_TOKEN
 # Add them at: Settings → Secrets and variables → Actions → New repository secret
 
 name: Preview
@@ -35,9 +35,11 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
         run: |
           set +e
-          output=$(npm run deploy:preview -- --name "${{ github.head_ref }}" 2>&1)
+          preview_name=$(echo "${{ github.head_ref }}" | cut -c1-53)
+          output=$(npm run deploy:preview -- --name "$preview_name" 2>&1)
           exit_code=$?
           set -e
           echo "$output"
